@@ -1,5 +1,5 @@
 "use client"
-import {useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {useParams} from "next/navigation";
 import {useSession} from "@/features/session/use-session";
 import {UserData} from "@/types/session";
@@ -44,28 +44,21 @@ const VideoCall = ({userId, roomId, username}: VideoCallProps) => {
     const ws = useRef<WebSocket | null>(null);
     const localStream = useRef<MediaStream | null>(null);
     const screenStream = useRef<MediaStream | null>(null);
+    const wsConnected = useRef(false);
+    const reconnectAttempts = useRef(0);
+    const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
+    const reconnectDelay = useRef(1000);
 
-    // WebSocket setup
-    const setupWebSocket = () => {
-        ws.current = new WebSocket(`${WS_URL}/call?roomId=${roomId}&userId=${userId}`);
+    const sendSignalMessage = useCallback((targetId: string, type: SignalMessage['type'], data: SignalMessage['data']) => {
+        ws.current?.send(JSON.stringify({
+            type,
+            senderId: userId,
+            senderName: username,
+            targetId,
+            data
+        }));
+    }, [userId, username]);
 
-        ws.current.onmessage = async (event) => {
-            const message = JSON.parse(event.data) as BroadcastMessage | SignalMessage;
-
-            if (message.type === 'user-list') {
-                const users = (message as BroadcastMessage).data;
-                await handleNewUsers(users);
-            } else {
-                await handleSignalMessage(message as SignalMessage);
-            }
-        };
-
-        ws.current.onclose = () => {
-            console.log('WebSocket connection closed');
-        };
-    };
-
-    // Media setup
     const setupMedia = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -81,11 +74,10 @@ const VideoCall = ({userId, roomId, username}: VideoCallProps) => {
         }
     };
 
-    const createPeerConnection = async (targetId: string, targetUsername: string) => {
+    const createPeerConnection = useCallback(async (targetId: string, targetUsername: string) => {
         const peer = new RTCPeerConnection({
             iceServers: [
                 {urls: 'stun:stun.l.google.com:19302'},
-                // Add TURN server configuration if needed
             ]
         });
 
@@ -131,7 +123,6 @@ const VideoCall = ({userId, roomId, username}: VideoCallProps) => {
             }
         };
 
-        // Add all available tracks
         [localStream.current, screenStream.current].forEach(stream => {
             stream?.getTracks().forEach(track => {
                 peer.addTrack(track, stream);
@@ -140,9 +131,10 @@ const VideoCall = ({userId, roomId, username}: VideoCallProps) => {
 
         peers.current[targetId] = peer;
         return peer;
-    };
+    }, [sendSignalMessage]);
 
-    const handleSignalMessage = async (message: SignalMessage) => {
+
+    const handleSignalMessage = useCallback(async (message: SignalMessage) => {
         if (message.senderId === userId) return;
 
         try {
@@ -168,12 +160,11 @@ const VideoCall = ({userId, roomId, username}: VideoCallProps) => {
         } catch (error) {
             console.error('Error handling signal:', error);
         }
-    };
+    }, [createPeerConnection, sendSignalMessage, userId]);
 
-    const handleNewUsers = async (users: Array<UserData>) => {
+    const handleNewUsers = useCallback(async (users: Array<UserData>) => {
         const currentPeerIds = Object.keys(peers.current);
 
-        // Remove disconnected peers
         currentPeerIds.forEach(peerId => {
             if (!users.some(u => u.userId === peerId)) {
                 peers.current[peerId]?.close();
@@ -182,7 +173,6 @@ const VideoCall = ({userId, roomId, username}: VideoCallProps) => {
             }
         });
 
-        // Create connections for new users
         const newUsers = users.filter(user =>
             user.userId !== userId &&
             !peers.current[user.userId] &&
@@ -196,17 +186,52 @@ const VideoCall = ({userId, roomId, username}: VideoCallProps) => {
                 console.error('Error creating peer connection:', error);
             }
         }
-    };
+    }, [createPeerConnection, userId]);
 
-    const sendSignalMessage = (targetId: string, type: SignalMessage['type'], data: SignalMessage['data']) => {
-        ws.current?.send(JSON.stringify({
-            type,
-            senderId: userId,
-            senderName: username,
-            targetId,
-            data
-        }));
-    };
+    const setupWebSocket = useCallback(() => {
+        if (ws.current) {
+            ws.current.close();
+        }
+
+        ws.current = new WebSocket(`${WS_URL}/call?roomId=${roomId}&userId=${userId}`);
+
+        ws.current.onopen = () => {
+            reconnectAttempts.current = 0;
+            reconnectDelay.current = 1000;
+
+            if (wsConnected.current) {
+                Object.values(peers.current).forEach(peer => peer.close());
+                peers.current = {};
+                setRemoteStreams([]);
+            }
+            wsConnected.current = true;
+        };
+
+        ws.current.onmessage = async (event) => {
+            const message = JSON.parse(event.data) as BroadcastMessage | SignalMessage;
+
+            if (message.type === 'user-list') {
+                const users = (message as BroadcastMessage).data;
+                await handleNewUsers(users);
+            } else {
+                await handleSignalMessage(message as SignalMessage);
+            }
+        };
+
+        ws.current.onclose = () => {
+            console.log('WebSocket connection closed');
+            wsConnected.current = false;
+
+            reconnectDelay.current = Math.min(reconnectDelay.current * 2, 30000);
+            reconnectAttempts.current += 1;
+
+            reconnectTimeout.current = setTimeout(() => {
+                console.log(`Attempting reconnect #${reconnectAttempts.current}`);
+                setupWebSocket();
+            }, reconnectDelay.current);
+        };
+    }, [roomId, userId, handleNewUsers, handleSignalMessage]);
+
 
     const toggleMedia = (type: 'audio' | 'video') => {
         const newState = !(type === 'audio' ? isMuted : isVideoOn);
@@ -225,6 +250,13 @@ const VideoCall = ({userId, roomId, username}: VideoCallProps) => {
             screenStream.current?.getTracks().forEach(track => track.stop());
             screenStream.current = null;
             setIsScreenSharing(false);
+
+            Object.values(peers.current).forEach(peer => {
+                const videoTrack = peer.getSenders().find(sender => sender.track?.kind === 'video');
+                if (videoTrack && localStream.current) {
+                    videoTrack.replaceTrack(localStream.current?.getVideoTracks()[0]);
+                }
+            });
         } else {
             try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -232,15 +264,28 @@ const VideoCall = ({userId, roomId, username}: VideoCallProps) => {
                     audio: true
                 });
 
+                stream.getVideoTracks().forEach(track => {
+                    track.contentHint = 'screenshare';
+                });
+
                 screenStream.current = stream;
                 setIsScreenSharing(true);
 
-                // Add screen tracks to all peers
                 Object.values(peers.current).forEach(peer => {
-                    stream.getTracks().forEach(track => {
-                        peer.addTrack(track, stream);
-                    });
+                    const videoSender = peer.getSenders().find(
+                        sender => sender.track?.kind === 'video'
+                    );
+
+                    if (videoSender) {
+                        const screenTrack = stream.getVideoTracks()[0];
+                        videoSender.replaceTrack(screenTrack);
+                    }
                 });
+
+                stream.getVideoTracks()[0].onended = () => {
+                    toggleScreenShare();
+                };
+
             } catch (error) {
                 console.error('Error sharing screen:', error);
             }
@@ -260,14 +305,13 @@ const VideoCall = ({userId, roomId, username}: VideoCallProps) => {
             localStream.current?.getTracks().forEach(track => track.stop());
             screenStream.current?.getTracks().forEach(track => track.stop());
         };
-    }, []);
+    }, [setupWebSocket]);
 
     return (
         <div className="bg-gray-900 min-h-screen text-white p-4">
             <div className="max-w-7xl mx-auto h-[calc(100vh-1rem)] relative">
                 <div
                     className="grid grid-flow-col auto-cols-[minmax(300px,1fr)] overflow-x-auto pb-4 h-[calc(100%-6rem)] gap-4 custom-scrollbar">
-                    {/* Local Video */}
                     <div
                         className="relative w-full h-full bg-gray-800 rounded-lg overflow-hidden border-2 border-transparent hover:border-gray-600 transition-all">
                         <video
@@ -308,7 +352,7 @@ const VideoCall = ({userId, roomId, username}: VideoCallProps) => {
                     {remoteStreams.map(({userId, username, stream, isScreen}) => (
                         <div
                             key={`${userId}-${isScreen ? 'screen' : 'cam'}`}
-                            className={`relative w-full h-[200px] bg-gray-800 rounded-lg overflow-hidden ${
+                            className={`relative w-full h-full bg-gray-800 rounded-lg overflow-hidden ${
                                 isScreen ? 'border-2 border-green-500' : 'border-2 border-transparent hover:border-gray-600'
                             } transition-all`}
                         >
@@ -319,7 +363,7 @@ const VideoCall = ({userId, roomId, username}: VideoCallProps) => {
                                         video.srcObject = stream;
                                     }
                                 }}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-fit aspect-video"
                                 muted={isScreen}
                             />
                             <div className="absolute bottom-2 left-2 flex items-center gap-2">
@@ -334,7 +378,6 @@ const VideoCall = ({userId, roomId, username}: VideoCallProps) => {
                     ))}
                 </div>
 
-                {/* Controls */}
                 <div
                     className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4 bg-gray-800 p-3 rounded-3xl">
                     <Button
