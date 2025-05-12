@@ -37,7 +37,6 @@ public class ChatHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception {
         Room room = getRoomData(session);
-        log.info("room {}", room);
         sessions.computeIfAbsent(room.getId(), k -> ConcurrentHashMap.newKeySet()).add(session);
         sendMessageHistory(session, room.getId());
     }
@@ -53,9 +52,7 @@ public class ChatHandler extends TextWebSocketHandler {
         sessions
                 .getOrDefault(roomId, Collections.emptySet())
                 .forEach(session -> {
-                    log.info("Session: {}", session);
                     if (session.isOpen()) {
-                        log.info("Sending Message: {}", message);
                         sendMessage(session, message);
                     }
                 });
@@ -75,8 +72,6 @@ public class ChatHandler extends TextWebSocketHandler {
                                      @NonNull TextMessage message) throws Exception {
         Room room = getRoomData(session);
         User user = getCurrentUser(session);
-        log.info("user {}", user);
-        log.info("room {}", room);
         MessageDto savedMessage = messageService.sendMessage(room, message.getPayload(), user);
         broadcastMessage(room.getId(), savedMessage);
     }

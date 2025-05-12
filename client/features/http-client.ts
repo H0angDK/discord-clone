@@ -11,7 +11,6 @@ interface HttpClient extends RequestInit {
 const BASE_URL = process.env.API_URL || "http://localhost:8080";
 
 export async function httpClient<T>(url: string, args: HttpClient) {
-    console.log(BASE_URL)
     const {method, ...other} = args;
 
     const config: HttpClient = {

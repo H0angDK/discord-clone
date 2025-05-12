@@ -37,7 +37,6 @@ public class RoomService {
     @Transactional
     public RoomDto createRoom(RoomDto roomDto) {
         User creator = userService.getCurrentUser();
-        log.info("creator: {}", creator);
         Room newRoom = Room.builder()
                 .name(roomDto.getName())
                 .build();
@@ -45,7 +44,6 @@ public class RoomService {
         newRoom.addUser(creator);
         Room savedRoom = roomRepository.save(newRoom);
 
-        log.info("Room created: {} by user {}", savedRoom.getName(), creator.getId());
         return convertToDto(savedRoom);
     }
 
@@ -80,7 +78,6 @@ public class RoomService {
 
         room.removeUser(user);
         roomRepository.save(room);
-        log.info("User {} left room {}", user.getId(), roomId);
     }
 
     @Transactional(readOnly = true)

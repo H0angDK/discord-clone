@@ -18,7 +18,8 @@ export const NavLink = ({
                             ...rest
                         }: NavLinkProps) => {
     const pathname = usePathname();
-    const isActive = rest.href instanceof String ? pathname === rest.href : pathname === (rest.href as URL).pathname;
+
+    const isActive = pathname === rest.href;
     return (
         <Link
             {...rest}

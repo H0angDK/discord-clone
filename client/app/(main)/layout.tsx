@@ -15,6 +15,7 @@ const getRooms = async (): Promise<Room[]> => {
         },
         next: {
             tags: ["rooms"],
+            revalidate: 60,
         },
     });
 

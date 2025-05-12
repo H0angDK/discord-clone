@@ -34,7 +34,6 @@ public class MessageService {
 
         var savedMessage = messageRepository.save(message);
 
-        log.info("Message: {}", savedMessage);
         return convertToDto(savedMessage);
     }
 

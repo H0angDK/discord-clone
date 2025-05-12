@@ -37,8 +37,6 @@ public class CallingHandler extends TextWebSocketHandler {
         Set<WebSocketSession> roomSessions = rooms.computeIfAbsent(room.getId(), k -> ConcurrentHashMap.newKeySet());
         roomSessions.add(session);
         broadcastUserList(room);
-        log.info("User [{}] joined room [{}]", user.getId(), room.getId());
-
     }
 
     @Override
@@ -60,7 +58,6 @@ public class CallingHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         removeSession(session);
-        log.info("Connection closed for user [{}]", getUserData(session).getId());
     }
 
     private void handleOffer(User sender, Room room, JsonNode json) {
@@ -106,7 +103,6 @@ public class CallingHandler extends TextWebSocketHandler {
                 try {
                     session.sendMessage(new TextMessage(mapper.writeValueAsString(message)));
                 } catch (IOException e) {
-                    log.error("Error sending message to user", e);
                     removeSession(session);
                 }
             }
@@ -133,7 +129,6 @@ public class CallingHandler extends TextWebSocketHandler {
                 try {
                     session.sendMessage(new TextMessage(mapper.writeValueAsString(message)));
                 } catch (IOException e) {
-                    log.error("Error sending message to session", e);
                     removeSession(session);
                 }
             }
@@ -162,7 +157,6 @@ public class CallingHandler extends TextWebSocketHandler {
                     rooms.remove(room.getId());
                 }
                 broadcastUserList(room);
-                log.info("User [{}] removed from room [{}]", user.getId(), room.getId());
             }
         } catch (Exception e) {
             log.error("Error removing session", e);

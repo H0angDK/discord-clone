@@ -1,6 +1,6 @@
 'use client';
 
-import {createContext, ReactNode, useContext, useState} from 'react'
+import {createContext, ReactNode, useContext, useEffect, useState} from 'react'
 import {Room} from "@/types/room"
 
 type RoomsContextType = {
@@ -18,10 +18,19 @@ interface RoomsProviderProps {
 
 export const RoomsProvider = ({children, initialRooms}: RoomsProviderProps) => {
     const [currentRoom, setRoom] = useState<Room | null>(null);
-    const [rooms, _] = useState<Room[]>(initialRooms);
-    const setCurrentRoom = (room: Room) => {
+    const [rooms] = useState<Room[]>(initialRooms);
+
+    useEffect(() => {
+        if (localStorage.getItem('currentRoom') && rooms.length) {
+            setCurrentRoom(rooms.find(room => room.id === localStorage.getItem('currentRoom')) || null);
+        }
+    }, [initialRooms, rooms]);
+
+    const setCurrentRoom = (room: Room | null) => {
         setRoom(room);
+        localStorage.setItem('currentRoom', room?.id || '');
     }
+
     return (
         <RoomsContext value={{rooms, currentRoom, setCurrentRoom}}>
             {children}

@@ -20,7 +20,6 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     public AuthDto.Response signUp(AuthDto.SignUpRequest request) {
-        log.info("Sign up request: {}", request.getUsername());
         if (userService.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("User already exists");
         }
@@ -44,7 +43,6 @@ public class AuthService {
     }
 
     public AuthDto.Response signIn(AuthDto.SignInRequest request) {
-        log.info("Sign in request: {}", request.getUsername());
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),

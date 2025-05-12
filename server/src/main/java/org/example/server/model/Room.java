@@ -27,8 +27,8 @@ public class Room {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
-    private boolean isPrivate;
+//    @Column(nullable = false)
+//    private boolean isPrivate;
 
     @Builder.Default
     @ManyToMany(mappedBy = "rooms")
