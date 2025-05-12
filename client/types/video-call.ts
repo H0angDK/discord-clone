@@ -1,0 +1,1 @@
+export type CallStatus = 'idle' | 'connecting' | 'connected' | 'failed';

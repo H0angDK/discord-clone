@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@theme {
+  /* Light theme colors */
+  --color-primary: hsl(215, 91%, 62%);
+  --color-secondary: hsl(172, 69%, 48%);
+  --color-accent: hsl(262, 69%, 58%);
+  --color-neutral: hsl(240, 5%, 45%);
+
+  --color-error: hsl(0, 84%, 60%);
+  --color-warning: hsl(38, 92%, 50%);
+  --color-success: hsl(142, 71%, 45%);
+  --color-info: hsl(199, 89%, 48%);
+  --color-alert: hsl(32, 95%, 55%);
+  --color-notice: hsl(49, 94%, 58%);
+
+  --color-surface-50: hsl(240, 6%, 98%);
+  --color-surface-100: hsl(240, 5%, 95%);
+  --color-surface-200: hsl(240, 5%, 90%);
+  --color-surface-300: hsl(240, 4%, 85%);
+  --color-surface-400: hsl(240, 4%, 75%);
+  --color-surface-500: hsl(240, 4%, 65%);
+  --color-surface-600: hsl(240, 4%, 55%);
+  --color-surface-700: hsl(240, 4%, 45%);
+  --color-surface-800: hsl(240, 4%, 35%);
+  --color-surface-900: hsl(240, 6%, 10%);
+
+  --color-text-primary: var(--color-surface-900);
+  --color-text-secondary: hsl(240, 4%, 46%);
+  --color-text-tertiary: hsl(240, 4%, 60%);
+  --color-text-disabled: hsl(240, 3%, 75%);
+  --color-text-inverse: hsl(240, 6%, 98%);
+
+  --color-border-light: hsl(240, 5%, 90%);
+  --color-border-medium: hsl(240, 4%, 75%);
+  --color-border-heavy: hsl(240, 4%, 60%);
+  --color-border-active: var(--color-primary);
+
+  --color-primary-hover: hsl(215, 91%, 58%);
+  --color-primary-active: hsl(215, 91%, 54%);
+  --color-primary-focus: hsla(215, 91%, 62%, 0.2);
+
+  --color-overlay: hsla(240, 6%, 10%, 0.8);
+  --color-shadow: hsla(240, 6%, 10%, 0.15);
+}
+
+@layer theme {
+  [data-theme="dark"],
+  [class="dark"] {
+    --color-primary: hsl(215, 91%, 68%);
+    --color-secondary: hsl(172, 69%, 52%);
+    --color-accent: hsl(262, 69%, 64%);
+    --color-neutral: hsl(225, 8%, 70%);
+
+    --color-surface-50: hsl(240, 6%, 10%);
+    --color-surface-100: hsl(240, 6%, 15%);
+    --color-surface-200: hsl(240, 6%, 20%);
+    --color-surface-300: hsl(240, 6%, 25%);
+    --color-surface-400: hsl(240, 6%, 30%);
+    --color-surface-500: hsl(240, 6%, 35%);
+    --color-surface-600: hsl(240, 6%, 40%);
+    --color-surface-700: hsl(240, 6%, 45%);
+    --color-surface-800: hsl(240, 6%, 50%);
+    --color-surface-900: hsl(240, 6%, 98%);
+
+    --color-text-primary: var(--color-surface-900);
+    --color-text-secondary: hsl(225, 8%, 70%);
+    --color-text-tertiary: hsl(240, 8%, 40%);
+    --color-text-disabled: hsl(225, 8%, 0%);
+    --color-text-inverse: hsl(240, 6%, 10%);
+
+    --color-border-light: hsl(225, 8%, 25%);
+    --color-border-medium: hsl(225, 8%, 35%);
+    --color-border-heavy: hsl(225, 8%, 45%);
+    --color-border-active: var(--color-primary);
+
+    --color-primary-hover: hsl(215, 91%, 72%);
+    --color-primary-active: hsl(215, 91%, 76%);
+    --color-primary-focus: hsla(215, 91%, 68%, 0.3);
+
+    --color-overlay: hsla(240, 6%, 2%, 0.9);
+    --color-shadow: hsla(240, 6%, 2%, 0.3);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+/* Custom Scrollbar (WebKit Browsers + Firefox) */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-corner,
+::-webkit-scrollbar-track {
+  background-color: rgb(64, 64, 64);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-primary);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-primary-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--color-primary-active);
+}
+
+::-webkit-scrollbar-button:single-button {
+  display: none;
+}
