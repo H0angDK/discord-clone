@@ -2,22 +2,21 @@ package org.example.server.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
-@Table(name = "rooms", indexes = @Index(columnList = "name"))
+@Table(name = "rooms", indexes = {
+        @Index(columnList = "name"),
+        @Index(columnList = "is_private")
+})
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @ToString(exclude = {"users", "messages"})
-@Slf4j
 public class Room {
 
     @Id
@@ -27,27 +26,42 @@ public class Room {
     @Column(nullable = false)
     private String name;
 
-//    @Column(nullable = false)
-//    private boolean isPrivate;
+    @Column(nullable = false)
+    private boolean isPrivate;
 
     @Builder.Default
-    @ManyToMany(mappedBy = "rooms")
-    private List<User> users = new ArrayList<>();
+    @ManyToMany(mappedBy = "rooms", fetch = FetchType.LAZY)
+    private Set<User> users = new HashSet<>();
 
-
-    private Instant createdAt;
     @Builder.Default
     @OneToMany(
             mappedBy = "room",
-            fetch = FetchType.LAZY,
-            cascade = {CascadeType.PERSIST, CascadeType.MERGE},
+            cascade = CascadeType.ALL,
             orphanRemoval = true
     )
     private List<Message> messages = new ArrayList<>();
 
+    private Instant createdAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = Instant.now();
+    }
+
+    public void addUser(User user) {
+        if (users.add(user)) {
+            user.getRooms().add(this);
+        }
+    }
+
+    public void removeUser(User user) {
+        if (users.remove(user)) {
+            user.getRooms().remove(this);
+        }
+    }
+
+    public boolean containsUser(User user) {
+        return users.contains(user);
     }
 
     public void addMessage(Message message) {
@@ -55,23 +69,15 @@ public class Room {
         message.setRoom(this);
     }
 
-    public void removeMessage(Message message) {
-        messages.remove(message);
-        message.setRoom(null);
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Room)) return false;
+        return id != null && id.equals(((Room) o).id);
     }
 
-    public void addUser(User user) {
-        users.add(user);
-        user.getRooms().add(this);
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
-
-    public void removeUser(User user) {
-        users.remove(user);
-        user.getRooms().remove(this);
-    }
-
-    public boolean containsUser(User user) {
-        return this.users != null && this.users.contains(user);
-    }
-
 }

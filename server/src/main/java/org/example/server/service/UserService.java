@@ -50,15 +50,20 @@ public class UserService implements UserDetailsService {
 
     private UserDto toDto(User user) {
         return UserDto.builder()
-                .id(user.getId())
+                .userId(user.getId())
                 .username(user.getUsername())
                 .build();
     }
 
     public List<UserDto> findUserByUsernameContainingIgnoreCase(String username) {
-        return userRepository.findUserByUsernameContainingIgnoreCase(username)
+        var user = getCurrentUser();
+        return userRepository.findUserByUsernameContainingIgnoreCaseAndIdNot(username, user.getId())
                 .stream()
                 .map(this::toDto)
                 .toList();
+    }
+
+    public List<User> findByUsernames(List<String> usernames) {
+        return userRepository.findUserByUsernamesCaseSensitive(usernames);
     }
 }

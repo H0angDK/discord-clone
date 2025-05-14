@@ -13,5 +13,6 @@ public class RoomDto {
     private UUID id;
     private String name;
     private Instant createdAt;
-    private List<UserDto> users;
+    private boolean isPrivate;
+    private List<String> users;
 }

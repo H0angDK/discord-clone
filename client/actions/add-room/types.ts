@@ -1,21 +1,23 @@
-import { Room } from "@/types/room";
-import { z } from "zod";
+import {Room} from "@/types/room";
+import {z} from "zod";
 
 export const AddRoomSchema = z.object({
-  name: z.string().nonempty({ message: "Name is required." }).trim(),
+    name: z.string().nonempty({message: "Name is required."}).trim(),
+    isPrivate: z.boolean().default(false),
 });
 
 export type FormState =
-  | {
-      errors?: {
+    | {
+    errors?: {
         name?: string[];
-      };
-      message?: string;
-      success: boolean;
-      data?: Room;
-    }
-  | undefined;
+    };
+    message?: string;
+    success: boolean;
+    data?: Room;
+}
+    | undefined;
 
 export enum Field {
-  Name = "name",
+    Name = "name",
+    IsPrivate = "isPrivate",
 }

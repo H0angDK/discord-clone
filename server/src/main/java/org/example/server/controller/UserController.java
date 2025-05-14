@@ -19,7 +19,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<List<UserDto>> getAllUsers(@RequestParam(required = false) String username) {
-        return ResponseEntity.ok(userService.findUserByUsernameContainingIgnoreCase(username));
+    public ResponseEntity<List<UserDto>> getAllUsers(@RequestParam(required = false) String query) {
+        return ResponseEntity.ok(userService.findUserByUsernameContainingIgnoreCase(query));
     }
 }

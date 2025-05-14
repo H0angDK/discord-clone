@@ -1,6 +1,5 @@
 package org.example.server.service;
 
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.server.dto.RoomDto;
@@ -12,25 +11,27 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class RoomService {
+
     private final RoomRepository roomRepository;
     private final UserService userService;
 
     @Transactional(readOnly = true)
-    public Page<RoomDto> getRooms(Pageable pageable) {
-        var user = userService.getCurrentUser();
+    public Page<RoomDto> getRoomsForUser(Pageable pageable) {
+        User user = userService.getCurrentUser();
         return roomRepository.findByUsersId(user.getId(), pageable)
                 .map(this::convertToDto);
     }
 
     @Transactional(readOnly = true)
-    public Page<RoomDto> getAllRooms(Pageable pageable) {
-        return roomRepository.findAll(pageable)
+    public Page<RoomDto> searchRooms(String query, Pageable pageable) {
+        return roomRepository.findRoomByNameContainsIgnoreCaseAndIsPrivateFalse(query, pageable)
                 .map(this::convertToDto);
     }
 
@@ -39,60 +40,54 @@ public class RoomService {
         User creator = userService.getCurrentUser();
         Room newRoom = Room.builder()
                 .name(roomDto.getName())
+                .isPrivate(roomDto.isPrivate())
                 .build();
 
         newRoom.addUser(creator);
         Room savedRoom = roomRepository.save(newRoom);
-
         return convertToDto(savedRoom);
     }
 
-    private void validateRoomName(String name) {
-        if (roomRepository.existsByName(name)) {
-            throw new IllegalArgumentException("Room name already exists");
+    @Transactional
+    public void joinRoom(UUID roomId, List<String> usernames) {
+        Room room = roomRepository.findWithUsersById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+
+        List<User> users = userService.findByUsernames(usernames);
+
+        users.forEach(user -> {
+            if (!room.containsUser(user)) {
+                room.addUser(user);
+            }
+        });
+        roomRepository.save(room);
+    }
+
+    @Transactional
+    public void leaveRoom(UUID roomId) {
+        User user = userService.getCurrentUser();
+        Room room = roomRepository.findWithUsersById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+
+        if (!room.containsUser(user)) {
+            throw new IllegalStateException("User is not a member of this room");
         }
+
+        room.removeUser(user);
     }
 
     private RoomDto convertToDto(Room room) {
         return RoomDto.builder()
                 .id(room.getId())
                 .name(room.getName())
+                .isPrivate(room.isPrivate())
                 .createdAt(room.getCreatedAt())
                 .build();
-    }
-
-    @Transactional(readOnly = true)
-    public Page<RoomDto> getRoomsForUser(UUID userId, Pageable pageable) {
-        return roomRepository.findByUsersId(userId, pageable)
-                .map(this::convertToDto);
-    }
-
-    @Transactional
-    public void leaveRoom(UUID roomId) {
-        Room room = getRoomById(roomId);
-        User user = userService.getCurrentUser();
-
-        if (!room.getUsers().contains(user)) {
-            throw new IllegalStateException("User is not a member of this room");
-        }
-
-        room.removeUser(user);
-        roomRepository.save(room);
     }
 
     @Transactional(readOnly = true)
     public Room getRoomById(UUID id) {
         return roomRepository.findWithUsersById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found"));
-    }
-
-
-    @Transactional
-    public void joinRoom(RoomDto dto) {
-        Room room = getRoomById(dto.getId());
-        dto.getUsers().forEach(user -> {
-            var existingUser = userService.findByUsername(user.getUsername());
-            existingUser.ifPresent(room::addUser);
-        });
     }
 }

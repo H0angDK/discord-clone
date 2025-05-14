@@ -17,7 +17,6 @@ export function useSession() {
                 next: {
                     tags: ["session"],
                 },
-                cache: "force-cache",
             });
 
             if (!response.ok) throw new Error("Failed to fetch session");

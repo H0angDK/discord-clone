@@ -3,6 +3,7 @@ package org.example.server.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.example.server.dto.UserDto;
 import org.example.server.model.Room;
 import org.example.server.model.User;
 import org.springframework.stereotype.Component;
@@ -110,9 +111,9 @@ public class CallingHandler extends TextWebSocketHandler {
     }
 
     private void broadcastUserList(Room room) {
-        List<UserInfo> users = getRoomSessions(room).stream()
+        List<UserDto> users = getRoomSessions(room).stream()
                 .map(this::getUserData)
-                .map(user -> new UserInfo(user.getId(), user.getUsername()))
+                .map(user -> new UserDto(user.getId(), user.getUsername()))
                 .toList();
 
         BroadcastMessage userList = new BroadcastMessage("user-list", users);
@@ -173,9 +174,6 @@ public class CallingHandler extends TextWebSocketHandler {
     }
 
     public record BroadcastMessage(String type, Object data) {
-    }
-
-    public record UserInfo(UUID userId, String username) {
     }
 }
 

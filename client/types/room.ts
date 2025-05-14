@@ -1,5 +1,6 @@
 export interface Room {
-  id: string;
-  name: string;
-  createdAt: number;
+    id: string;
+    name: string;
+    createdAt: number;
+    isPrivate: boolean;
 }

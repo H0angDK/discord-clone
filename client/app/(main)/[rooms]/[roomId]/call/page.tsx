@@ -226,7 +226,6 @@ const VideoCall = ({userId, roomId, username}: VideoCallProps) => {
             reconnectAttempts.current += 1;
 
             reconnectTimeout.current = setTimeout(() => {
-                console.log(`Attempting reconnect #${reconnectAttempts.current}`);
                 setupWebSocket();
             }, reconnectDelay.current);
         };

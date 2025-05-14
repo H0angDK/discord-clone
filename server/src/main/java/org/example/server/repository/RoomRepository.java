@@ -19,4 +19,6 @@ public interface RoomRepository extends JpaRepository<Room, UUID> {
 
     @EntityGraph(attributePaths = "users")
     Optional<Room> findWithUsersById(UUID id);
+
+    Page<Room> findRoomByNameContainsIgnoreCaseAndIsPrivateFalse(String name, Pageable pageable);
 }

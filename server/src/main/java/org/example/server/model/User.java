@@ -8,54 +8,63 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.*;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = {
+        @Index(name = "idx_user_username", columnList = "username")
+})
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@ToString(exclude = {"tokens", "rooms", "messages"})
+@ToString
 public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(unique = true, nullable = false, name = "username")
+    @Column(unique = true, nullable = false)
     private String username;
 
-    @Column(nullable = false, name = "password")
+    @Column(nullable = false)
     private String password;
 
     @Builder.Default
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
     private List<Token> tokens = new ArrayList<>();
 
     @Builder.Default
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "user_room",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "room_id")
     )
+    @ToString.Exclude
     private Set<Room> rooms = new HashSet<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Message> messages;
+    @ToString.Exclude
+    private List<Message> messages = new ArrayList<>();
 
+    // UserDetails methods
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
     }
 
     public void addRoom(Room room) {
-        rooms.add(room);
-        room.getUsers().add(this);
+        if (rooms.add(room)) {
+            room.getUsers().add(this);
+        }
     }
 
     public void removeRoom(Room room) {
-        rooms.remove(room);
-        room.getUsers().remove(this);
+        if (rooms.remove(room)) {
+            room.getUsers().remove(this);
+        }
     }
 
     public void addMessage(Message message) {
@@ -63,18 +72,11 @@ public class User implements UserDetails {
         message.setSender(this);
     }
 
-    public void removeMessage(Message message) {
-        messages.remove(message);
-        message.setSender(null);
-    }
-
-    // In User.java (entity)
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return id != null && id.equals(user.id);
+        if (!(o instanceof User)) return false;
+        return id != null && id.equals(((User) o).id);
     }
 
     @Override

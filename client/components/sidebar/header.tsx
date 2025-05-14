@@ -1,30 +1,40 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { BurgerIcon, SearchIcon } from "@/components/icon";
+"use client"
+import {Input} from "@/components/ui/input";
+import {SearchIcon} from "@/components/icon";
+import {usePathname, useRouter, useSearchParams} from "next/navigation";
 
-interface HeaderProps {
-  isSidebarOpen: boolean;
-  onToggle: () => void;
-}
 
-function Header({ isSidebarOpen, onToggle }: HeaderProps) {
-  return (
-    <>
-      {isSidebarOpen && (
-        <Input
-          type="text"
-          variant="primary"
-          inputClassName="py-1!"
-          icon={<SearchIcon className="size-6" />}
-          placeholder={"Search"}
-        />
-      )}
+function Header() {
+    const searchParams = useSearchParams();
+    const pathname = usePathname();
+    const {replace, refresh} = useRouter();
 
-      <Button variant="outline" size="sm" className="p-1!" onClick={onToggle}>
-        <BurgerIcon className="fill-text-primary size-6" />
-      </Button>
-    </>
-  );
+    const handleSearch = (query: string) => {
+        const params = new URLSearchParams(searchParams);
+        if (query) {
+            params.set('query', query);
+        } else {
+            params.delete('query');
+        }
+        replace(`${pathname}?${params.toString()}`);
+        refresh();
+    };
+    return (
+        <>
+            <Input
+                type="text"
+                variant="primary"
+                inputClassName="py-1!"
+                icon={<SearchIcon className="size-6"/>}
+                placeholder={"Search"}
+                onChange={(e) => {
+                    handleSearch(e.target.value);
+                }}
+                defaultValue={searchParams.get('query')?.toString()}
+            />
+
+        </>
+    );
 }
 
 export default Header;
