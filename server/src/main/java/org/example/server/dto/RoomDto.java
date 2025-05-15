@@ -15,4 +15,5 @@ public class RoomDto {
     private Instant createdAt;
     private boolean isPrivate;
     private List<String> users;
+    private boolean isYour;
 }

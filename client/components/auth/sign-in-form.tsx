@@ -27,7 +27,6 @@ export function SignInForm() {
                     label="Username"
                     type="text"
                     placeholder="Enter your username"
-                    defaultValue={"!user12345"}
                 />
 
                 <Input
@@ -36,7 +35,6 @@ export function SignInForm() {
                     label="Password"
                     type="password"
                     placeholder="Enter your password"
-                    defaultValue={"!user12345"}
                 />
 
                 <Button

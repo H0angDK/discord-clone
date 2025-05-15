@@ -23,7 +23,6 @@ public class AuthService {
         if (userService.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("User already exists");
         }
-
         var user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))

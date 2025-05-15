@@ -25,7 +25,7 @@ public class RoomService {
     @Transactional(readOnly = true)
     public Page<RoomDto> getRoomsForUser(Pageable pageable) {
         User user = userService.getCurrentUser();
-        return roomRepository.findByUsersId(user.getId(), pageable)
+        return roomRepository.findMergedRooms(user.getId(), pageable)
                 .map(this::convertToDto);
     }
 
@@ -42,7 +42,6 @@ public class RoomService {
                 .name(roomDto.getName())
                 .isPrivate(roomDto.isPrivate())
                 .build();
-
         newRoom.addUser(creator);
         Room savedRoom = roomRepository.save(newRoom);
         return convertToDto(savedRoom);
@@ -77,11 +76,14 @@ public class RoomService {
     }
 
     private RoomDto convertToDto(Room room) {
+        var user = userService.getCurrentUser();
+        log.info("CONTAINS: {}", room.containsUser(user));
         return RoomDto.builder()
                 .id(room.getId())
                 .name(room.getName())
                 .isPrivate(room.isPrivate())
                 .createdAt(room.getCreatedAt())
+                .isYour(room.containsUser(user))
                 .build();
     }
 

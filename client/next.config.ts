@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
         API_URL: process.env.API_URL,
         WS_URL: process.env.WS_URL,
     },
+    output: "standalone"
 };
 
 export default nextConfig;

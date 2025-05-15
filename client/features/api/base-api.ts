@@ -1,5 +1,6 @@
 "use server";
 import {getSession, setSession} from "@/features/session/server";
+import {ErrorApi} from "@/types/error-api";
 
 type Method = "GET" | "POST" | "PUT" | "DELETE";
 
@@ -45,8 +46,9 @@ export async function request<T>(url: string, args: HttpClient) {
     try {
         const response = await fetch(`${BASE_URL}${url}`, config);
         if (!response.ok) {
+            const error = await response.json() as ErrorApi
             return {
-                error: "Failed to fetch data",
+                error: error.message,
                 data: undefined as T,
                 isOk: false
             }
@@ -58,6 +60,7 @@ export async function request<T>(url: string, args: HttpClient) {
             isOk: true
         }
     } catch (err) {
+        console.log(err)
         return {
             error: err instanceof Error ? err.message : "Failed to fetch data",
             data: undefined as T,

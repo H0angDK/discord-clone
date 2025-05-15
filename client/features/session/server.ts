@@ -4,7 +4,8 @@ import {SessionData} from "@/types/session";
 import {revalidateTag} from "next/cache";
 
 const SESSION_SECRET = process.env.SESSION_SECRET || "salt";
-const production = process.env.NODE_ENV === "production";
+
+//const production = process.env.NODE_ENV === "production";
 
 async function getKey(): Promise<CryptoKey> {
     const encoder = new TextEncoder();
@@ -73,7 +74,7 @@ export async function setSession(data: SessionData) {
 
         cookieStore.set("session", session, {
             httpOnly: true,
-            secure: production,
+            secure: false,
             sameSite: "lax",
             path: "/",
         });

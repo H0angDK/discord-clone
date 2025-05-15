@@ -56,6 +56,11 @@ export function SignUpForm() {
                     placeholder="Confirm your password"
                 />
 
+
+                {state?.message && (
+                    <p className="text-sm text-error text-center">{state?.message}</p>
+                )}
+
                 <Button
                     type="submit"
                     variant="primary"

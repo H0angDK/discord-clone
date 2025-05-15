@@ -3,4 +3,5 @@ export interface Room {
     name: string;
     createdAt: number;
     isPrivate: boolean;
+    your: boolean;
 }

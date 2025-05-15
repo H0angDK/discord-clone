@@ -26,7 +26,6 @@ public class RoomController {
 
     @GetMapping
     private ResponseEntity<Page<RoomDto>> getRooms(@RequestParam(required = false) String query, Pageable pageable) {
-        log.info("Getting rooms");
         return ResponseEntity.ok(roomService.searchRooms(query, pageable));
     }
 
@@ -43,8 +42,6 @@ public class RoomController {
 
     @PutMapping("/add-users")
     private ResponseEntity<Void> addUsersToRoom(@RequestBody RoomDto roomDto) {
-        log.info("Adding users to room");
-        log.info("RoomDto: {}", roomDto);
         roomService.joinRoom(roomDto.getId(), roomDto.getUsers());
         return ResponseEntity.ok().build();
     }
