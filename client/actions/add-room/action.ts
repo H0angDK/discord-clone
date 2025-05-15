@@ -1,16 +1,13 @@
 "use server";
 import {AddRoomSchema, Field, FormState} from "@/actions/add-room/types";
-import {getSession} from "@/features/session/server";
 import {revalidateTag} from "next/cache";
-import {httpClient} from "@/features/http-client";
-import {Room} from "@/types/room";
+import {roomsAPI} from "@/features/api";
 
 export async function addRoomAction(_: FormState, formData: FormData) {
     const validatedFields = AddRoomSchema.safeParse({
         name: formData.get(Field.Name),
         isPrivate: formData.get(Field.IsPrivate) === "on",
     });
-
 
     if (!validatedFields.success) {
         return {
@@ -19,19 +16,7 @@ export async function addRoomAction(_: FormState, formData: FormData) {
         };
     }
 
-    const session = await getSession();
-
-
-    const {data, error} = await httpClient<Room>("/api/rooms", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.accessToken}`,
-        },
-
-        body: JSON.stringify(validatedFields.data),
-    });
-
+    const {data, error} = await roomsAPI.createRoom(validatedFields.data.name, validatedFields.data.isPrivate);
 
     if (error) {
         return {

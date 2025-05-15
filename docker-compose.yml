@@ -21,11 +21,10 @@ services:
 
   server:
     build:
-      context: .
+      context: ./server
       dockerfile: Dockerfile
     environment:
       DB_HOST: db
-      DB_PORT: 5432
       DB_USER: postgres
       DB_PASS: postgres
       DB_NAME: postgres
@@ -39,7 +38,7 @@ services:
         condition: service_healthy
   client:
     build:
-      context: .
+      context: ./client
       dockerfile: Dockerfile
     depends_on:
       - server

@@ -56,9 +56,7 @@ export const ChatProvider = ({
             userId: session.userId,
         });
 
-        const socket = new WebSocket(
-            `${WS_URL}/chat?${query.toString()}`
-        );
+        const socket = new WebSocket(`${WS_URL}/chat?${query.toString()}`);
 
         socketRef.current = socket;
 

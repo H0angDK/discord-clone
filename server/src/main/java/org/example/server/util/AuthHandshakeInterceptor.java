@@ -44,10 +44,12 @@ public class AuthHandshakeInterceptor implements HandshakeInterceptor {
 
         var user = userService.findById(userId);
         var room = roomService.getRoomById(roomId);
+        log.info("User {} connected to room {}", userId, roomId);
 
         if (user.isPresent() && room != null
 //                && room.containsUser(user.get())
         ) {
+            log.info("User {} connected to room {}", userId, roomId);
             attributes.put("user", user.get());
             attributes.put("room", room);
             return true;

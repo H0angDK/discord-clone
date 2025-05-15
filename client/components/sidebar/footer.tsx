@@ -1,12 +1,11 @@
 "use client"
 import {Button} from "@/components/ui/button";
-import {NavLink} from "@/components/ui/nav-link";
-import clsx from "@/features/clsx";
 import {Input} from "@/components/ui/input";
-import {AddIcon, CogIcon} from "@/components/icon";
+import {AddIcon} from "@/components/icon";
 import {useActionState} from "react";
 import {addRoomAction, Field, FormState} from "@/actions/add-room";
 import {redirect} from "next/navigation";
+import {logout} from "@/actions/logout";
 
 
 const action = async (_: FormState, formData: FormData) => {
@@ -35,11 +34,9 @@ function Footer() {
                 Room
             </Button>
 
-            <Button variant="outline" className="p-0.5!" size="xs">
-                <NavLink href={"/settings"} className={clsx("p-0 text-text-primary")}>
-                    <CogIcon className="size-10"/>
-                </NavLink>
-            </Button>
+            <form action={logout}>
+                <Button type="submit" size={"md"}>Log out</Button>
+            </form>
 
             <dialog
                 popover="auto"

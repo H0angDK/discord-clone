@@ -1,8 +1,8 @@
 "use client";
 import {useEffect, useOptimistic, useRef} from "react";
 import {Message} from "@/types/message";
-import {Header} from "./header";
-import {MessageList} from "./message-list";
+import {Header} from "./header/header";
+import {MessageList} from "./message/message-list";
 import {Footer} from "./footer";
 import {useChat} from "@/features/context/chat-context";
 

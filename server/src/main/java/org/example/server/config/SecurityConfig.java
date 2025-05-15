@@ -34,7 +34,7 @@ public class SecurityConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
-                registry.addMapping("/**").allowedOrigins("*");
+                registry.addMapping("/**").allowedMethods("*").allowedOriginPatterns("*");
             }
         };
     }
@@ -52,7 +52,7 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/chat", "/call").permitAll()
+                        .requestMatchers("/api/auth/**", "/chat/**", "/call/**").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

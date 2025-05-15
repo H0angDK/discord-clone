@@ -53,7 +53,7 @@ export function SignInForm() {
                 )}
 
                 <p className="text-sm text-center text-text-secondary">
-                    Don't have an account?{" "}
+                    Don&apos;t have an account?{" "}
                     <NavLink href={"/sign-up"} className="hover:underline">
                         Sign Up
                     </NavLink>

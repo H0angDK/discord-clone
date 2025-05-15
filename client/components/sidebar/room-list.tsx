@@ -1,25 +1,18 @@
 "use client";
 import {NavLink} from "../ui/nav-link";
 import {Room} from "@/types/room";
-import {httpClient} from "@/features/http-client";
-import {Pageable} from "@/types/pagination";
+import {roomsAPI} from "@/features/api";
 import {useSearchParams} from "next/navigation";
 import {useEffect, useState} from "react";
 import {Loading} from "./loading";
+import {useDebounce} from "@/features/use-debounce";
 
 const getRooms = async (query: string): Promise<Room[]> => {
-    const params = new URLSearchParams({query});
-    const url = query ? `/api/rooms?${params.toString()}` : "/api/rooms/users";
-    const {data, error} = await httpClient<Pageable<Room>>(url, {
-        method: "GET",
-        next: {
-            tags: ["rooms"],
-            revalidate: 60,
-        },
-    });
+    const {data, error} = await roomsAPI.getRooms(query);
+
 
     if (error) {
-        throw error;
+        throw new Error(error)
     }
 
     return data.content;
@@ -30,13 +23,15 @@ export function RoomList() {
     const [rooms, setRooms] = useState<Room[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const searchParams = useSearchParams();
+    const query = searchParams.get("query") || "";
+    const debouncedQuery = useDebounce(query);
 
     useEffect(() => {
         setIsLoading(true);
-        getRooms(searchParams.get("query") || "").then((rooms) => {
+        getRooms(debouncedQuery).then((rooms) => {
             setRooms(rooms)
         }).finally(() => setIsLoading(false));
-    }, [searchParams]);
+    }, [debouncedQuery]);
 
     if (isLoading) {
         return <Loading/>
